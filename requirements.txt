@@ -1,0 +1,34 @@
+﻿# Core Web Framework & Async
+fastapi>=0.111.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.7.0
+pydantic-settings>=2.3.0
+python-multipart>=0.0.9
+websockets>=12.0
+python-dotenv>=1.0.1
+loguru>=0.7.2
+httpx>=0.27.0
+
+# Multi-Agent Orchestration & LLM
+langgraph>=0.2.0
+langchain>=0.2.0
+langchain-core>=0.2.0
+langchain-community>=0.2.0
+langchain-openai>=0.1.8
+litellm>=1.40.0
+
+# DATA-01: Text-to-SQL & Data Engine
+duckdb>=1.0.0
+sqlglot>=25.0.0
+pandas>=2.2.0
+numpy>=1.26.0
+tabulate>=0.9.0
+
+# AIP-04: Advanced Hybrid RAG Engine
+qdrant-client>=1.9.0
+rank-bm25>=0.2.2
+scikit-learn>=1.5.0
+
+# Testing
+pytest>=8.2.0
+pytest-asyncio>=0.23.0
