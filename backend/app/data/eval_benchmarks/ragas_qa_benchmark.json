@@ -1,0 +1,14 @@
+[
+  {
+    "id": "RAGAS_EVAL_01",
+    "question": "Mức chiết khấu cho đại lý cấp 1 Platinum đối với phần cứng và phần mềm là bao nhiêu?",
+    "ground_truth_answer": "Đại lý cấp 1 (Platinum Partner) được chiết khấu 20% cho thiết bị phần cứng và 25% cho dịch vụ/phần mềm Cloud Analytics, với điều kiện doanh số tối thiểu 2 tỷ VNĐ/quý.",
+    "reference_doc": "chinh_sach_chiet_khau_ban_hang_2025.md"
+  },
+  {
+    "id": "RAGAS_EVAL_02",
+    "question": "Chỉ tiêu doanh thu và giám đốc phụ trách khu vực Miền Bắc trong Quý 3 năm 2025 là ai?",
+    "ground_truth_answer": "Chỉ tiêu doanh thu Quý 3 năm 2025 khu vực Miền Bắc là 2.200.000.000 VNĐ (lợi nhuận gộp 900.000.000 VNĐ), do Giám đốc khu vực Nguyễn Văn Hải phụ trách.",
+    "reference_doc": "chien_luoc_kinh_doanh_q3_mien_bac.md"
+  }
+]
