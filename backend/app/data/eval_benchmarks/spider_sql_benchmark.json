@@ -1,0 +1,20 @@
+[
+  {
+    "id": "SQL_EVAL_01",
+    "question": "Tổng doanh thu và lợi nhuận của từng khu vực trong năm 2025 là bao nhiêu?",
+    "ground_truth_sql": "SELECT r.region_name, SUM(o.total_amount) as total_revenue, SUM(o.total_profit) as total_profit FROM orders o JOIN regions r ON o.region_id = r.region_id WHERE o.year = 2025 GROUP BY r.region_name ORDER BY total_revenue DESC;",
+    "difficulty": "easy"
+  },
+  {
+    "id": "SQL_EVAL_02",
+    "question": "Liệt kê top 3 sản phẩm có doanh số bán cao nhất trong quý 3 năm 2025?",
+    "ground_truth_sql": "SELECT p.product_name, SUM(oi.quantity) as total_qty, SUM(oi.line_total) as total_sales FROM order_items oi JOIN products p ON oi.product_id = p.product_id JOIN orders o ON oi.order_id = o.order_id WHERE o.year = 2025 AND o.quarter = 3 GROUP BY p.product_name ORDER BY total_sales DESC LIMIT 3;",
+    "difficulty": "medium"
+  },
+  {
+    "id": "SQL_EVAL_03",
+    "question": "So sánh doanh thu thực tế và chỉ tiêu doanh thu của khu vực Miền Bắc theo từng quý năm 2025?",
+    "ground_truth_sql": "SELECT st.quarter, st.target_revenue, COALESCE(SUM(o.total_amount), 0) as actual_revenue, (COALESCE(SUM(o.total_amount), 0) - st.target_revenue) as variance FROM sales_targets st JOIN regions r ON st.region_id = r.region_id LEFT JOIN orders o ON st.region_id = o.region_id AND st.year = o.year AND st.quarter = o.quarter WHERE r.region_name = 'Miền Bắc' AND st.year = 2025 GROUP BY st.quarter, st.target_revenue ORDER BY st.quarter;",
+    "difficulty": "hard"
+  }
+]
