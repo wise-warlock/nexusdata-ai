@@ -86,15 +86,3 @@ exusdata-ai
 | **Spider SQL Execution Accuracy** | ≥ 85.0% | **100.0%** | So khớp kết quả thực thi |
 | **SQL Syntax Validity** | 100% | **100.0%** | AST Parser `sqlglot` |
 
----
-
-## 💼 Cách Viết Vào CV Chuẩn Kỹ Sư AI (Resume Bullet Points)
-
-```markdown
-**NexusData AI Platform — Unified Data & RAG Intelligence System**
-*Tech stack: Python, FastAPI, LangGraph, DuckDB, sqlglot, Qdrant, BM25, RAGAS, ECharts, Docker*
-- Xây dựng hệ thống Multi-Agent Text-to-SQL tự động sinh truy vấn trên DuckDB OLAP, tích hợp AST security linter với sqlglot và cơ chế self-healing tự sửa lỗi đạt 100% Execution Accuracy trên tập Spider Benchmark.
-- Thiết kế pipeline Advanced Hybrid RAG (BM25 sparse + Dense Vector) kết hợp Cross-Encoder Reranker, tích hợp framework RAGAS đo lường tự động (Faithfulness: 0.94, Context Precision: 0.88).
-- Phát triển module Auto-Tuning Grid Search tối ưu hóa siêu tham số (chunk size, overlap, reranking) giúp giảm 45% chi phí token và 30% độ trễ trên đường cong Pareto.
-- Xây dựng Visualization Engine tự động đề xuất và dàn lưới các biểu đồ tương tác ECharts (Bar/Line/Pie) kèm Executive Narrative Insights từ dữ liệu truy vấn.
-```
