@@ -1,4 +1,4 @@
-﻿from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings
 from typing import Optional
 from pathlib import Path
 
@@ -32,6 +32,12 @@ class Settings(BaseSettings):
     # Security & RBAC
     JWT_SECRET_KEY: str = "nexusdata_super_secret_jwt_key_2026_change_in_production"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
+    
+    # GateKV Infrastructure & KV-Cache Optimization Settings
+    ENABLE_GATEKV: bool = True
+    GATEKV_DEFAULT_RETENTION_RATIO: float = 0.65  # Retain 65% on average (35% overall VRAM savings)
+    GATEKV_SENSITIVE_LAYERS: list = [1, 2, 3]    # Early layers protected from aggressive eviction
+    GATEKV_DEEP_LAYER_EVICTION_RATIO: float = 0.35 # Retain only 35% in deep layers (65% pruned)
     
     # Observability
     LANGFUSE_PUBLIC_KEY: Optional[str] = None
