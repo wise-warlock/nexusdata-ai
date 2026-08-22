@@ -579,6 +579,175 @@
                 btn.innerText = 'Chạy Auto-Tuning Grid Search';
             }
         }
+
+        // ==========================================
+        // ⚡ GateKV FinOps & KV-Cache Functions
+        // ==========================================
+        let gateKVLayerChart = null;
+        let gateKVScenarioChart = null;
+
+        function setSimPrompt(txt) {
+            document.getElementById('sim-prompt-input').value = txt;
+        }
+
+        async function loadGateKVStats() {
+            try {
+                const res = await fetch('/api/v1/gatekv/stats');
+                const data = await res.json();
+                renderGateKVLayerChart();
+                renderGateKVScenarioChart(data.benchmarks.benchmark_scenarios);
+            } catch (e) {
+                console.error("Failed to load GateKV stats:", e);
+            }
+        }
+
+        async function renderGateKVLayerChart() {
+            const chartDom = document.getElementById('chart-gatekv-layers');
+            if (!chartDom) return;
+            if (gateKVLayerChart) gateKVLayerChart.dispose();
+            gateKVLayerChart = echarts.init(chartDom, 'dark', { backgroundColor: 'transparent' });
+
+            try {
+                const res = await fetch('/api/v1/gatekv/sensitivity-curve');
+                const layers = await res.json();
+
+                const xLabels = layers.map(l => `Tầng ${l.layer_index}`);
+                const sensitivityData = layers.map(l => l.sensitivity_score);
+                const retentionData = layers.map(l => (l.recommended_kv_retention_ratio * 100).toFixed(0));
+
+                gateKVLayerChart.setOption({
+                    tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
+                    legend: { data: ['Độ Nhạy Cảm (Sensitivity)', 'KV Retention Budget (%)'], bottom: '0', textStyle: { color: '#94a3b8', fontSize: 10 } },
+                    grid: { top: '12%', left: '4%', right: '4%', bottom: '15%', containLabel: true },
+                    xAxis: { type: 'category', data: xLabels, axisLabel: { fontSize: 9, color: '#94a3b8' } },
+                    yAxis: [
+                        { type: 'value', name: 'Sensitivity Score', max: 12, axisLabel: { color: '#c084fc' } },
+                        { type: 'value', name: 'Retention %', max: 100, axisLabel: { color: '#38bdf8' } }
+                    ],
+                    series: [
+                        {
+                            name: 'Độ Nhạy Cảm (Sensitivity)',
+                            type: 'bar',
+                            data: sensitivityData,
+                            itemStyle: {
+                                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                    { offset: 0, color: '#c084fc' },
+                                    { offset: 1, color: '#7e22ce' }
+                                ]),
+                                borderRadius: [4, 4, 0, 0]
+                            }
+                        },
+                        {
+                            name: 'KV Retention Budget (%)',
+                            type: 'line',
+                            yAxisIndex: 1,
+                            smooth: true,
+                            data: retentionData,
+                            lineStyle: { width: 3, color: '#38bdf8' },
+                            itemStyle: { color: '#38bdf8' }
+                        }
+                    ]
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function renderGateKVScenarioChart(scenarios) {
+            const chartDom = document.getElementById('chart-gatekv-scenarios');
+            if (!chartDom) return;
+            if (gateKVScenarioChart) gateKVScenarioChart.dispose();
+            gateKVScenarioChart = echarts.init(chartDom, 'dark', { backgroundColor: 'transparent' });
+
+            const categories = (scenarios || []).map(s => s.scenario.split(':')[0]);
+            const vanillaData = (scenarios || []).map(s => s.vanilla_vram_mb);
+            const gatekvData = (scenarios || []).map(s => s.gatekv_vram_mb);
+
+            gateKVScenarioChart.setOption({
+                tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                legend: { data: ['Vanilla KV Cache (MB)', 'GateKV Optimized (MB)'], bottom: '0', textStyle: { color: '#94a3b8', fontSize: 10 } },
+                grid: { top: '12%', left: '4%', right: '4%', bottom: '15%', containLabel: true },
+                xAxis: { type: 'category', data: categories, axisLabel: { fontSize: 10, color: '#94a3b8' } },
+                yAxis: { type: 'value', name: 'VRAM (MB)', axisLabel: { color: '#94a3b8' } },
+                series: [
+                    {
+                        name: 'Vanilla KV Cache (MB)',
+                        type: 'bar',
+                        data: vanillaData,
+                        itemStyle: { color: '#ef4444', borderRadius: [4, 4, 0, 0] }
+                    },
+                    {
+                        name: 'GateKV Optimized (MB)',
+                        type: 'bar',
+                        data: gatekvData,
+                        itemStyle: { color: '#10b981', borderRadius: [4, 4, 0, 0] }
+                    }
+                ]
+            });
+        }
+
+        async function runGateKVSimulation() {
+            const prompt = document.getElementById('sim-prompt-input').value.trim();
+            if (!prompt) return;
+            const ratio = parseFloat(document.getElementById('sim-retention-ratio').value);
+            const btn = document.getElementById('btn-run-sim');
+            btn.disabled = true;
+            btn.innerText = 'Đang phân tích GateKV...';
+
+            try {
+                const res = await fetch('/api/v1/gatekv/simulate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: prompt, target_retention_ratio: ratio })
+                });
+                const data = await res.json();
+                
+                document.getElementById('sim-results-box').classList.remove('hidden');
+                document.getElementById('sim-res-savings-pct').innerText = `${data.overall_vram_savings_percent}%`;
+                document.getElementById('sim-res-savings-kb').innerText = `Tiết kiệm ${data.vram_saved_kb} KB (${data.gatekv_vram_kb} KB vs ${data.baseline_vram_kb} KB)`;
+                document.getElementById('sim-res-regret-rate').innerText = `${data.zero_regret_retention_rate}%`;
+                document.getElementById('sim-res-critical-count').innerText = `${data.token_quadrant_analysis.critical_needles_count} / ${data.prompt_length_words} tokens`;
+                document.getElementById('sim-res-pruned-count').innerText = `${data.token_quadrant_analysis.redundant_evicted_count} tokens`;
+
+                const badgesContainer = document.getElementById('sim-token-badges');
+                badgesContainer.innerHTML = '';
+                (data.token_quadrant_analysis.sample_tokens || []).forEach(t => {
+                    const span = document.createElement('span');
+                    if (t.is_critical_needle) {
+                        span.className = 'px-2 py-1 bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 rounded font-mono text-[11px] shadow-sm';
+                        span.title = `Critical Needle | Attention: ${t.global_attention_mass} | Gate: ${t.shortconv_gate_energy}`;
+                    } else {
+                        span.className = 'px-2 py-1 bg-slate-800/80 border border-slate-700/60 text-slate-400 rounded font-mono text-[11px]';
+                        span.title = `Evictable in Deep Layers | Attention: ${t.global_attention_mass} | Gate: ${t.shortconv_gate_energy}`;
+                    }
+                    span.innerText = t.text;
+                    badgesContainer.appendChild(span);
+                });
+            } catch (e) {
+                alert('Lỗi giả lập GateKV: ' + e);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'Chạy Giả Lập Nén Token';
+            }
+        }
+
+        async function runGateKVBenchmark() {
+            const btn = document.getElementById('btn-gatekv-bench');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent inline-block mr-1"></div> Đang Benchmark...';
+            try {
+                const res = await fetch('/api/v1/gatekv/benchmark', { method: 'POST' });
+                const data = await res.json();
+                alert(`✅ Benchmark GateKV Hoàn Tất!\n• Spider SQL Accuracy: ${data.sql_execution_accuracy_retained}%\n• RAGAS Score: ${data.ragas_overall_score_retained}\n• VRAM Tiết Kiệm: ${data.summary.average_vram_saved_percent}%\n• Zero-Regret Verified: ${data.zero_regret_verified ? 'ĐẠT (100%)' : 'KHÔNG'}`);
+                loadGateKVStats();
+            } catch (e) {
+                alert('Lỗi Benchmark: ' + e);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="zap" class="w-4 h-4"></i><span>Chạy Benchmark GateKV</span>';
+                lucide.createIcons();
+            }
+        }
     </script>
 </body>
 </html>
