@@ -1,4 +1,4 @@
-﻿from fastapi import FastAPI
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -8,13 +8,14 @@ from app.api.v1.sql import router as sql_router
 from app.api.v1.rag import router as rag_router
 from app.api.v1.dashboard import router as dash_router
 from app.api.v1.eval import router as eval_router
+from app.api.v1.gatekv import router as gatekv_router
 from loguru import logger
 import os
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    description="Unified Enterprise AI Platform: Text-to-SQL (DATA-01) + Auto-Dashboard (DATA-16) + Self-Optimizing Advanced RAG (AIP-04)"
+    description="Unified Enterprise AI Platform: Text-to-SQL (DATA-01) + Auto-Dashboard (DATA-16) + Self-Optimizing Advanced RAG (AIP-04) + GateKV FinOps Engine"
 )
 
 app.add_middleware(
@@ -31,6 +32,7 @@ app.include_router(sql_router, prefix="/api/v1/sql", tags=["DATA-01 Text-to-SQL 
 app.include_router(rag_router, prefix="/api/v1/rag", tags=["AIP-04 Advanced RAG Engine"])
 app.include_router(dash_router, prefix="/api/v1/dashboard", tags=["DATA-16 Visualization Engine"])
 app.include_router(eval_router, prefix="/api/v1/eval", tags=["AIP-04 & DATA-01 Evaluation Studio"])
+app.include_router(gatekv_router, prefix="/api/v1/gatekv", tags=["GateKV FinOps & KV-Cache Optimizer"])
 
 # Static Web UI Dashboard Mount
 static_dir = os.path.join(os.path.dirname(__file__), "static")
