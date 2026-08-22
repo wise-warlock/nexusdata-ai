@@ -1,4 +1,4 @@
-﻿import pytest
+import pytest
 import sys
 import os
 
@@ -76,3 +76,49 @@ def test_full_agent_graph_execution():
     assert result["sql_query"] is not None
     assert len(result["query_result_data"]) > 0
     assert len(result["chart_schemas"]) > 0
+
+def test_gatekv_layer_sensitivity_and_simulation():
+    from app.engines.gatekv_engine import gatekv_engine
+
+    # 1. Test Layer Sensitivity Curve (Early layers sensitive, deep layers elastic)
+    curve = gatekv_engine.compute_layer_sensitivity_curve()
+    assert len(curve) == 16
+    layer2 = [l for l in curve if l["layer_index"] == 2][0]
+    layer14 = [l for l in curve if l["layer_index"] == 14][0]
+    assert layer2["sensitivity_score"] > layer14["sensitivity_score"]
+    assert layer2["is_sensitive_protected"] is True
+
+    # 2. Test Prompt KV-Cache Eviction Simulation
+    sql_prompt = "SELECT r.region_name, SUM(o.total_amount) as total_revenue FROM orders o JOIN regions r ON o.region_id = r.region_id GROUP BY r.region_name;"
+    sim = gatekv_engine.simulate_kv_eviction(sql_prompt, target_retention=0.65)
+    assert sim["overall_vram_savings_percent"] > 20.0
+    assert sim["zero_regret_retention_rate"] == 100.0
+    assert sim["vram_saved_kb"] > 0
+
+def test_gatekv_evaluation_benchmark():
+    gatekv_eval = eval_engine.run_gatekv_evaluation()
+    assert gatekv_eval["status"] == "success"
+    assert gatekv_eval["zero_regret_verified"] is True
+    assert gatekv_eval["summary"]["average_vram_saved_percent"] > 50.0
+    assert gatekv_eval["sql_execution_accuracy_retained"] >= 80.0
+
+def test_gatekv_api_endpoints():
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    client = TestClient(app)
+    
+    # 1. Stats endpoint
+    res_stats = client.get("/api/v1/gatekv/stats")
+    assert res_stats.status_code == 200
+    assert res_stats.json()["gatekv_enabled"] is True
+
+    # 2. Sensitivity curve endpoint
+    res_curve = client.get("/api/v1/gatekv/sensitivity-curve")
+    assert res_curve.status_code == 200
+    assert len(res_curve.json()) == 16
+
+    # 3. Simulate endpoint
+    res_sim = client.post("/api/v1/gatekv/simulate", json={"prompt": "SELECT * FROM orders WHERE total_amount > 1000;"})
+    assert res_sim.status_code == 200
+    assert "overall_vram_savings_percent" in res_sim.json()
