@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  nexus-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nexusdata-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_PATH=/app/app/data/sample_dw.duckdb
+      - QDRANT_URL=http://nexus-qdrant:6333
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+    volumes:
+      - ./backend/app/data:/app/app/data
+    depends_on:
+      - nexus-qdrant
+
+  nexus-qdrant:
+    image: qdrant/qdrant:latest
+    container_name: nexusdata-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+
+volumes:
+  qdrant_storage:
